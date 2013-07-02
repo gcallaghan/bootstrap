@@ -1,3 +1,5 @@
+var path = require('path');
+var extend = require('xtend');
 var markdown = require('node-markdown').Markdown;
 
 module.exports = function(grunt) {
@@ -342,6 +344,35 @@ module.exports = function(grunt) {
 
   grunt.registerTask('version', 'Set version. If no arguments, it just takes off suffix', function() {
     setVersion(this.args[0], this.args[1]);
+  });
+
+  grunt.registerTask('genBower', 'Build and generate bower package file',  function() {
+    grunt.task.requires('build');
+    var bowerPackage = [__dirname, 'dist','bower.json'],
+        gruntPackage = grunt.file.readJSON('package.json'),
+        bowerTmpl = {
+          ignore: [
+            "**/.*",
+            "node_modules",
+            "components"
+          ],
+          dependencies: {
+            angular: ">=1"
+          },
+          main: "ui-bootstrap-tpls"
+        };
+
+        bowerPackage = path.join.apply(path, bowerPackage);
+
+        if (grunt.file.exists(bowerPackage)){
+          bowerTmpl = extend(grunt.file.readJSON(bowerPackage),bowerTmpl);
+        }
+
+        bowerTmpl.main = bowerTmpl.main + '-' + gruntPackage.version + '.js';
+        bowerTmpl.version = gruntPackage.version;
+        bowerTmpl.author = {name:gruntPackage.author};
+
+        grunt.file.write(bowerPackage, JSON.stringify(bowerTmpl, null, 2));
   });
 
   grunt.registerMultiTask('shell', 'run shell commands', function() {
